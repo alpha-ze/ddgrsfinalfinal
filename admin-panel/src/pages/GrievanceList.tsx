@@ -100,6 +100,7 @@ export default function GrievanceList() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Category</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Identity</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Assigned Officer</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
             </tr>
           </thead>
@@ -119,12 +120,17 @@ export default function GrievanceList() {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                   {grievance.is_anonymous ? <span className="text-gray-500 dark:text-gray-500 italic">Anonymous</span> : grievance.user_name || 'Identified'}
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
+                  {grievance.assigned_member_name
+                    ? <span className="font-medium text-blue-700 dark:text-blue-400">{grievance.assigned_member_name}</span>
+                    : <span className="text-gray-400 italic">Unassigned</span>}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{formatDate(grievance.created_at)}</td>
               </tr>
             ))}
             {filteredGrievances.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No grievances found matching the current filters.</td>
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">No grievances found matching the current filters.</td>
               </tr>
             )}
           </tbody>

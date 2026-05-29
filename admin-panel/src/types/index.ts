@@ -20,6 +20,9 @@ export interface Grievance {
   image_url: string | null
   video_url: string | null
   status: GrievanceStatus
+  assigned_member_name: string | null
+  assigned_member_email: string | null
+  assigned_at: string | null
   created_at: string
   updated_at: string
 }

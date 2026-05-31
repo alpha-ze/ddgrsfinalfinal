@@ -181,10 +181,8 @@ app.post('/webhook', async (req, res) => {
 
     console.log(`Message from ${userId}: ${userMessage || '[image]'}`);
 
-    if (!userMessage) return;
-
     // ── Grievance ID lookup — works anytime, even outside a session ───────
-    if (/^GRV-\d+$/i.test(userMessage)) {
+    if (userMessage && /^GRV-\d+$/i.test(userMessage)) {
         const grievance = await db.getGrievanceById(userMessage.toUpperCase());
         let responseMessage;
         if (grievance) {
@@ -239,7 +237,7 @@ app.post('/webhook', async (req, res) => {
         return;
     }
 
-    if (!userMessage) return;
+    if (!userMessage) return;    if (!userMessage) return;
 
     try {
         let responseMessage = '';

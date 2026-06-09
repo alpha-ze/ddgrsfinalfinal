@@ -37,6 +37,15 @@ export interface GrievanceAction {
   created_at: string
 }
 
+export interface GrievanceReply {
+  id: string
+  grievance_id: string
+  grievance_uuid: string
+  user_phone: string
+  message: string
+  created_at: string
+}
+
 export interface GrievanceFeedback {
   id: string
   grievance_id: string

@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Grievance, GrievanceAction, GrievanceStatus } from '../types'
+import { Grievance, GrievanceAction, GrievanceStatus, GrievanceReply } from '../types'
 import { getStatusColor, formatDate } from '../lib/utils'
 import jsPDF from 'jspdf'
 import { Download } from 'lucide-react'
@@ -41,6 +41,22 @@ export default function GrievanceDetail() {
       return data as GrievanceAction[]
     },
   })
+
+  // Real-time replies
+  const [replies, setReplies] = useState<GrievanceReply[]>([])
+  useEffect(() => {
+    if (!grievance) return
+    supabase.from('grievance_replies').select('*')
+      .eq('grievance_uuid', id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setReplies((data || []) as GrievanceReply[]))
+
+    const channel = supabase.channel(`replies-${id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'grievance_replies', filter: `grievance_uuid=eq.${id}` },
+        (payload) => setReplies(prev => [payload.new as GrievanceReply, ...prev])
+      ).subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [id, grievance])
 
   const updateMutation = useMutation({
     mutationFn: async ({ currentRemarks, currentStatus }: { currentRemarks: string, currentStatus: GrievanceStatus }) => {
@@ -404,6 +420,21 @@ export default function GrievanceDetail() {
             ))}
           </div>
         </div>
+
+        {/* Student Replies */}
+        {replies.length > 0 && (
+          <div className="bg-white dark:bg-gray-900 rounded-lg border border-amber-300 dark:border-amber-600 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">💬 Student Replies</h2>
+            <div className="space-y-3">
+              {replies.map((reply) => (
+                <div key={reply.id} className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
+                  <p className="text-gray-900 dark:text-gray-100 text-sm">{reply.message}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{formatDate(reply.created_at)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

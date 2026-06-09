@@ -40,3 +40,13 @@ CREATE TABLE IF NOT EXISTS grievance_feedback (
     comments TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- ─── STEP 6: Student replies table ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS grievance_replies (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    grievance_id TEXT NOT NULL,        -- public GRV-XXXXXX id
+    grievance_uuid UUID NOT NULL,      -- internal UUID for joins
+    user_phone TEXT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

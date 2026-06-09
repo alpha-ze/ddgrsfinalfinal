@@ -7,6 +7,7 @@ const ws = require('ws');
 if (!globalThis.WebSocket) globalThis.WebSocket = ws.WebSocket || ws;
 const Database = require('./database-supabase');
 const { saveFeedback } = require('./services/feedbackService');
+const { saveReply } = require('./services/replyService');
 
 const app = express();
 const db = new Database();
@@ -412,6 +413,16 @@ app.post('/webhook', webhookLimiter, async (req, res) => {
                     getCategoryMenuText();
             }
 
+        } else if (session.step === 'awaiting_info') {
+            // Student replied to admin's info request
+            try {
+                await saveReply(session.awaitingGrievanceId, session.awaitingGrievanceUUID, userId, userMessage);
+            } catch (e) {
+                console.error('Reply save error:', e.message);
+            }
+            userSessions.delete(userId);
+            responseMessage = '✅ Your reply has been sent to the grievance officer. They will get back to you soon.';
+
         } else if (session.step === 'feedback_rating') {
             const rating = parseInt(userMessage);
             if (isNaN(rating) || rating < 1 || rating > 5) {
@@ -461,25 +472,35 @@ app.post('/notify', async (req, res) => {
         console.log(`[notify] phone=${phone}`);
 
         if (newStatus === 'Resolved') {
-            // Send feedback request instead of plain update
+            // Send feedback request
             const message =
                 `✅ Your grievance *${grievanceId}* has been resolved!\n\n` +
                 `Remarks: ${remarks}\nBy: ${adminName || 'Admin'}\n\n` +
                 `⭐ We'd love your feedback!\n` +
                 `How satisfied are you with the resolution?\n\n` +
                 `Reply with a number:\n` +
-                `1 - Very Dissatisfied\n` +
-                `2 - Dissatisfied\n` +
-                `3 - Neutral\n` +
-                `4 - Satisfied\n` +
-                `5 - Very Satisfied`;
+                `1 - Very Dissatisfied\n2 - Dissatisfied\n3 - Neutral\n4 - Satisfied\n5 - Very Satisfied`;
+            await sendMessage(phone, message);
+            userSessions.set(phone, { step: 'feedback_rating', feedbackGrievanceId: grievanceId });
+
+        } else if (newStatus === 'In Progress') {
+            // Admin asking for more info
+            const message =
+                `📋 Update on your grievance *${grievanceId}*\n\n` +
+                `Status: In Progress\n\n` +
+                `💬 The grievance officer needs more information:\n\n` +
+                `"${remarks}"\n\n` +
+                `Please reply with your response.`;
             await sendMessage(phone, message);
 
-            // Set feedback session for this user
+            // Set awaiting_info session so next reply is captured
+            const grievance = await db.getGrievanceById(grievanceId);
             userSessions.set(phone, {
-                step: 'feedback_rating',
-                feedbackGrievanceId: grievanceId
+                step: 'awaiting_info',
+                awaitingGrievanceId: grievanceId,
+                awaitingGrievanceUUID: grievance?.id || null
             });
+
         } else {
             const message =
                 `📢 Update on your grievance ${grievanceId}\n\n` +

@@ -4,9 +4,7 @@
   "description": "DDGRS WhatsApp Grievance Bot",
   "main": "bot-twilio.js",
   "scripts": {
-    "start": "node bot-twilio.js",
-    "start:wa": "node bot-whatsapp.js",
-    "start:api": "node bot-meta-api.js",
+    "start": "node bot-meta-aiy.js",
     "start:aiy": "node bot-meta-aiy.js"
   },
   "dependencies": {

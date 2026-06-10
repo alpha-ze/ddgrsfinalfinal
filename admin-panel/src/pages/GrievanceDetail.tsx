@@ -214,7 +214,6 @@ export default function GrievanceDetail() {
     if (grievance.image_url) {
       addSection('EVIDENCE IMAGE')
       try {
-        // Fetch image and convert to base64
         const response = await fetch(grievance.image_url)
         const blob = await response.blob()
         const base64 = await new Promise<string>((resolve) => {
@@ -222,7 +221,6 @@ export default function GrievanceDetail() {
           reader.onloadend = () => resolve(reader.result as string)
           reader.readAsDataURL(blob)
         })
-        // Calculate image dimensions to fit page
         const imgProps = doc.getImageProperties(base64)
         const maxW = pageW - margin * 2
         const maxH = 80
@@ -230,7 +228,6 @@ export default function GrievanceDetail() {
         const imgW = imgProps.width * ratio
         const imgH = imgProps.height * ratio
         if (y + imgH > 270) { doc.addPage(); y = 20 }
-        // Draw border around image
         doc.setDrawColor(200, 200, 200)
         doc.rect(col - 1, y - 1, imgW + 2, imgH + 2)
         doc.addImage(base64, 'JPEG', col, y, imgW, imgH)
@@ -241,6 +238,44 @@ export default function GrievanceDetail() {
         doc.text(`Image URL: ${grievance.image_url}`, col, y)
         y += 7
       }
+    }
+
+    // Evidence Video
+    if (grievance.video_url) {
+      addSection('EVIDENCE VIDEO')
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      doc.text('Video evidence attached. Access via the link below:', col, y)
+      y += 7
+      doc.setTextColor(30, 64, 175)
+      const videoLines = doc.splitTextToSize(grievance.video_url, pageW - margin * 2)
+      doc.text(videoLines, col, y)
+      doc.setTextColor(0, 0, 0)
+      y += 6 * videoLines.length + 4
+    }
+
+    // Student Replies
+    const { data: repliesData } = await supabase
+      .from('grievance_replies')
+      .select('*')
+      .eq('grievance_uuid', grievance.id)
+      .order('created_at', { ascending: true })
+
+    if (repliesData && repliesData.length > 0) {
+      addSection(`STUDENT REPLIES (${repliesData.length})`)
+      repliesData.forEach((reply: any, i: number) => {
+        if (y > 260) { doc.addPage(); y = 20 }
+        doc.setFillColor(255, 251, 235)
+        doc.rect(margin, y - 4, pageW - margin * 2, 6, 'F')
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.text(`Reply ${i + 1}  |  ${new Date(reply.created_at).toLocaleString()}`, col + 2, y)
+        y += 6
+        doc.setFont('helvetica', 'normal')
+        const rLines = doc.splitTextToSize(reply.message, pageW - margin * 2 - 4)
+        doc.text(rLines, col + 4, y)
+        y += 5 * rLines.length + 3
+      })
     }
     addSection(`ACTION HISTORY (${actions.length} actions)`)
     if (actions.length === 0) {

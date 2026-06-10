@@ -245,13 +245,12 @@ export default function GrievanceDetail() {
       addSection('EVIDENCE VIDEO')
       doc.setFont('helvetica', 'normal')
       doc.setFontSize(10)
-      doc.text('Video evidence attached. Access via the link below:', col, y)
+      doc.text('Video evidence attached. Click the link below to view:', col, y)
       y += 7
       doc.setTextColor(30, 64, 175)
-      const videoLines = doc.splitTextToSize(grievance.video_url, pageW - margin * 2)
-      doc.text(videoLines, col, y)
+      doc.textWithLink('▶ Click here to view video', col, y, { url: grievance.video_url })
       doc.setTextColor(0, 0, 0)
-      y += 6 * videoLines.length + 4
+      y += 10
     }
 
     // Student Replies
